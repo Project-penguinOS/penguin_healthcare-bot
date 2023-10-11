@@ -9,6 +9,8 @@ from sklearn.model_selection import cross_val_score
 from sklearn.svm import SVC
 import csv
 import warnings
+from transformers import pipeline
+
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 
@@ -22,6 +24,37 @@ y1= y
 
 
 reduced_data = training.groupby(training['prognosis']).max()
+
+label_to_adjective = {
+    'sadness': 'sad',
+    'disappointment': 'disappointed',
+    'neutral': 'neutral',
+    'annoyance': 'annoyed',
+    'disapproval': 'disapproving',
+    'realization': 'realized',
+    'approval': 'approving',
+    'disgust': 'disgusted',
+    'nervousness': 'nervous',
+    'caring': 'caring',
+    'joy': 'joyful',
+    'remorse': 'remorseful',
+    'grief': 'grief-stricken',
+    'anger': 'angry',
+    'embarrassment': 'embarrassed',
+    'desire': 'desirous',
+    'relief': 'relieved',
+    'optimism': 'optimistic',
+    'admiration': 'admiring',
+    'amusement': 'amused',
+    'excitement': 'excited',
+    'fear': 'fearful',
+    'love': 'loving',
+    'surprise': 'surprised',
+    'confusion': 'confused',
+    'gratitude': 'grateful',
+    'curiosity': 'curious',
+    'pride': 'proud'
+}
 
 #mapping strings to numbers
 le = preprocessing.LabelEncoder()
@@ -124,6 +157,23 @@ def getInfo():
     print("\nYour Name? \t\t\t\t",end="->")
     name=input("")
     print("Hello, ",name)
+
+def getEmotions():
+    classifier = pipeline(task="text-classification", model="SamLowe/roberta-base-go_emotions", top_k=None)
+    print(" How are you feeling today? \t\t\t\t",end="->")
+    sentences = input("")
+
+    model_outputs = classifier(sentences)
+    sorted_outputs = sorted(model_outputs[0], key=lambda x: x['score'], reverse=True)
+
+    top_labels = [label_to_adjective.get(output['label'], output['label']) for output in sorted_outputs[:2]]
+
+    if len(top_labels) == 2:
+        print(f"You seem {top_labels[0]} and {top_labels[1]}")
+    elif len(top_labels) == 1:
+        print(f"You seem {top_labels[0]}")
+    else:
+        print("Unable to determine emotions.")
 
 def check_pattern(dis_list,inp):
     pred_list=[]
@@ -264,5 +314,6 @@ getSeverityDict()
 getDescription()
 getprecautionDict()
 getInfo()
+getEmotions()
 tree_to_code(clf,cols)
 print("----------------------------------------------------------------------------------------")
